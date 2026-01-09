@@ -19,28 +19,35 @@ namespace Projekt.Controllers
             _context = context;
         }
 
-        // GET: Books
-        public async Task<IActionResult> Index()
+        // GET: Books (BONUS: filtrowanie)
+        public async Task<IActionResult> Index(string? author, int? categoryId)
         {
-            var applicationDbContext = _context.Books.Include(b => b.Category);
-            return View(await applicationDbContext.ToListAsync());
+            var q = _context.Books
+                .Include(b => b.Category)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(author))
+                q = q.Where(b => b.Author.Contains(author));
+
+            if (categoryId.HasValue)
+                q = q.Where(b => b.CategoryId == categoryId);
+
+            ViewData["Categories"] = new SelectList(_context.Categories, "Id", "Name", categoryId);
+            ViewData["Author"] = author;
+
+            return View(await q.ToListAsync());
         }
 
         // GET: Books/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var book = await _context.Books
                 .Include(b => b.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (book == null)
-            {
-                return NotFound();
-            }
+
+            if (book == null) return NotFound();
 
             return View(book);
         }
@@ -48,55 +55,48 @@ namespace Projekt.Controllers
         // GET: Books/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id");
+            // 1) Dropdown: Name zamiast Id
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
             return View();
         }
 
         // POST: Books/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Author,Description,CategoryId")] Book book)
+        public async Task<IActionResult> Create([Bind("Title,Author,Description,CategoryId")] Book book)
         {
+            // 2) Overposting: nie bindujemy Id w Create
             if (ModelState.IsValid)
             {
                 _context.Add(book);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id", book.CategoryId);
+
+            // Dropdown: Name + zachowanie wybranej kategorii
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
 
         // GET: Books/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var book = await _context.Books.FindAsync(id);
-            if (book == null)
-            {
-                return NotFound();
-            }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id", book.CategoryId);
+            if (book == null) return NotFound();
+
+            // 1) Dropdown: Name zamiast Id
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
 
         // POST: Books/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] Book book)
         {
-            if (id != book.Id)
-            {
-                return NotFound();
-            }
+            if (id != book.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -107,36 +107,27 @@ namespace Projekt.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!BookExists(book.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!BookExists(book.Id)) return NotFound();
+                    throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id", book.CategoryId);
+
+            // Dropdown: Name + zachowanie wybranej kategorii
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
 
         // GET: Books/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var book = await _context.Books
                 .Include(b => b.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (book == null)
-            {
-                return NotFound();
-            }
+
+            if (book == null) return NotFound();
 
             return View(book);
         }
@@ -146,13 +137,25 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            // 3) Blokada usuwania jeśli są wypożyczenia
+            var hasRentings = await _context.Rentings.AnyAsync(r => r.BookId == id);
+            if (hasRentings)
+            {
+                ModelState.AddModelError("", "Nie można usunąć książki, bo ma historię wypożyczeń.");
+                var bookWithCat = await _context.Books
+                    .Include(b => b.Category)
+                    .FirstOrDefaultAsync(b => b.Id == id);
+
+                return View("Delete", bookWithCat);
+            }
+
             var book = await _context.Books.FindAsync(id);
             if (book != null)
             {
                 _context.Books.Remove(book);
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 

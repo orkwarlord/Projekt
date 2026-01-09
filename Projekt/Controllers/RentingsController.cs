@@ -1,170 +1,139 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
 
 namespace Projekt.Controllers
 {
+    [Authorize]
     public class RentingsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public RentingsController(ApplicationDbContext context)
+        public RentingsController(ApplicationDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // GET: Rentings
-        public async Task<IActionResult> Index()
+        // ✅ Domyślna strona wypożyczeń = profil użytkownika (historia)
+        // GET: /Rentings
+        public IActionResult Index()
         {
-            var applicationDbContext = _context.Rentings.Include(r => r.AppUser).Include(r => r.Book);
-            return View(await applicationDbContext.ToListAsync());
+            return RedirectToAction(nameof(My));
         }
 
-        // GET: Rentings/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // =========================
+        // USER: moje wypożyczenia (profil)
+        // =========================
+        // GET: Rentings/My
+        public async Task<IActionResult> My()
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Challenge();
 
-            var renting = await _context.Rentings
-                .Include(r => r.AppUser)
+            var rentings = await _context.Rentings
+                .Where(r => r.AppUserId == userId)
                 .Include(r => r.Book)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (renting == null)
-            {
-                return NotFound();
-            }
+                    .ThenInclude(b => b.Category)
+                .OrderByDescending(r => r.RentedAt)
+                .ToListAsync();
 
-            return View(renting);
+            return View(rentings);
         }
 
-        // GET: Rentings/Create
-        public IActionResult Create()
-        {
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id");
-            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Id");
-            return View();
-        }
-
-        // POST: Rentings/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // =========================
+        // USER: wypożycz książkę
+        // =========================
+        // POST: Rentings/Borrow
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,BookId,AppUserId,RentedAt,ReturnedAt")] Renting renting)
+        public async Task<IActionResult> Borrow(int bookId)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(renting);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", renting.AppUserId);
-            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Id", renting.BookId);
-            return View(renting);
-        }
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Challenge();
 
-        // GET: Rentings/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
+            var bookExists = await _context.Books.AnyAsync(b => b.Id == bookId);
+            if (!bookExists) return NotFound();
+
+            var alreadyRented = await _context.Rentings
+                .AnyAsync(r => r.BookId == bookId && r.ReturnedAt == null);
+
+            if (alreadyRented)
             {
-                return NotFound();
+                TempData["Error"] = "Ta książka jest aktualnie niedostępna.";
+                return RedirectToAction("Index", "Books");
             }
 
-            var renting = await _context.Rentings.FindAsync(id);
-            if (renting == null)
+            _context.Rentings.Add(new Renting
             {
-                return NotFound();
-            }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", renting.AppUserId);
-            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Id", renting.BookId);
-            return View(renting);
-        }
-
-        // POST: Rentings/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,BookId,AppUserId,RentedAt,ReturnedAt")] Renting renting)
-        {
-            if (id != renting.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(renting);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!RentingExists(renting.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", renting.AppUserId);
-            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Id", renting.BookId);
-            return View(renting);
-        }
-
-        // GET: Rentings/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var renting = await _context.Rentings
-                .Include(r => r.AppUser)
-                .Include(r => r.Book)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (renting == null)
-            {
-                return NotFound();
-            }
-
-            return View(renting);
-        }
-
-        // POST: Rentings/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var renting = await _context.Rentings.FindAsync(id);
-            if (renting != null)
-            {
-                _context.Rentings.Remove(renting);
-            }
+                BookId = bookId,
+                AppUserId = userId,
+                RentedAt = DateTime.UtcNow,
+                ReturnedAt = null
+            });
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            TempData["Success"] = "Wypożyczono książkę.";
+            return RedirectToAction("Index", "Books");
         }
 
-        private bool RentingExists(int id)
+        // =========================
+        // USER: oddaj książkę
+        // =========================
+        // POST: Rentings/Return
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Return(int rentingId)
         {
-            return _context.Rentings.Any(e => e.Id == id);
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Challenge();
+
+            var renting = await _context.Rentings
+                .FirstOrDefaultAsync(r => r.Id == rentingId);
+
+            if (renting == null) return NotFound();
+
+            if (renting.ReturnedAt != null)
+            {
+                TempData["Error"] = "To wypożyczenie jest już zakończone (książka była oddana).";
+                return RedirectToAction(nameof(My));
+            }
+
+            // ✅ Bez ról: user może oddać TYLKO swoje wypożyczenie
+            if (renting.AppUserId != userId)
+                return Forbid();
+
+            renting.ReturnedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Zwrócono książkę.";
+            return RedirectToAction(nameof(My));
+        }
+
+        // (opcjonalnie) Details tylko dla zalogowanego usera, ale wyłącznie jego rekord
+        // Jeśli nie potrzebujesz Details, możesz to wywalić.
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Challenge();
+
+            var renting = await _context.Rentings
+                .Include(r => r.Book).ThenInclude(b => b.Category)
+                .FirstOrDefaultAsync(r => r.Id == id && r.AppUserId == userId);
+
+            if (renting == null) return NotFound();
+
+            return View(renting);
         }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
@@ -28,17 +27,12 @@ namespace Projekt.Controllers
         // GET: Categories/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var category = await _context.Categories
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (category == null)
-            {
-                return NotFound();
-            }
+
+            if (category == null) return NotFound();
 
             return View(category);
         }
@@ -50,12 +44,11 @@ namespace Projekt.Controllers
         }
 
         // POST: Categories/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name")] Category category)
+        public async Task<IActionResult> Create([Bind("Name")] Category category)
         {
+            // 1) Create – nie binduj Id
             if (ModelState.IsValid)
             {
                 _context.Add(category);
@@ -68,30 +61,20 @@ namespace Projekt.Controllers
         // GET: Categories/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var category = await _context.Categories.FindAsync(id);
-            if (category == null)
-            {
-                return NotFound();
-            }
+            if (category == null) return NotFound();
+
             return View(category);
         }
 
         // POST: Categories/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] Category category)
         {
-            if (id != category.Id)
-            {
-                return NotFound();
-            }
+            if (id != category.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -102,14 +85,8 @@ namespace Projekt.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CategoryExists(category.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!CategoryExists(category.Id)) return NotFound();
+                    throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -119,17 +96,12 @@ namespace Projekt.Controllers
         // GET: Categories/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var category = await _context.Categories
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (category == null)
-            {
-                return NotFound();
-            }
+
+            if (category == null) return NotFound();
 
             return View(category);
         }
@@ -139,13 +111,22 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category != null)
+            // 2) Delete – blokuj jeśli są książki w tej kategorii
+            var hasBooks = await _context.Books.AnyAsync(b => b.CategoryId == id);
+            if (hasBooks)
             {
-                _context.Categories.Remove(category);
+                ModelState.AddModelError("", "Nie można usunąć kategorii, bo są do niej przypisane książki.");
+                var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+                return View("Delete", category);
             }
 
-            await _context.SaveChangesAsync();
+            var categoryToDelete = await _context.Categories.FindAsync(id);
+            if (categoryToDelete != null)
+            {
+                _context.Categories.Remove(categoryToDelete);
+                await _context.SaveChangesAsync();
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
