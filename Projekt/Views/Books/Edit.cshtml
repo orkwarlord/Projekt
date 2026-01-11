@@ -27,14 +27,12 @@
                 <span asp-validation-for="Author" class="text-danger"></span>
             </div>
 
-            <!-- 1) Description jako textarea -->
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
                 <textarea asp-for="Description" class="form-control" rows="4"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
-            <!-- 2) Dropdown kategorii z placeholderem -->
             <div class="form-group">
                 <label asp-for="CategoryId" class="control-label"></label>
                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId">

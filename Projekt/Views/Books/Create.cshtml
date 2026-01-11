@@ -4,34 +4,33 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
+<h1>Dodaj książkę</h1>
 
-<h4>Book</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Title" class="control-label"></label>
                 <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Author" class="control-label"></label>
                 <input asp-for="Author" class="form-control" />
                 <span asp-validation-for="Author" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="Description" class="control-label"></label>
                 <textarea asp-for="Description" class="form-control" rows="4"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label asp-for="CategoryId" class="control-label"></label>
                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId">
                     <option value="">-- wybierz kategorię --</option>
@@ -39,19 +38,93 @@
                 <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
 
+            <!-- okładka upuszczanie pliku + wybór pliku -->
+            <div class="mb-3">
+                <label class="form-label">Okładka (przeciągnij plik lub kliknij)</label>
+
+                <div id="dropZone" class="border rounded p-4 text-center" style="cursor:pointer;">
+                    <div class="mb-2"><strong>Przeciągnij i upuść zdjęcie tutaj</strong></div>
+                    <div class="text-muted">lub kliknij, aby wybrać plik</div>
+                    <div id="fileInfo" class="mt-3"></div>
+                    <img id="preview" class="img-thumbnail mt-3 d-none" style="max-width: 250px;" />
+                </div>
+
+                <input id="coverInput" type="file" name="coverImage" accept="image/*" class="d-none" />
+                <div class="form-text">Dozwolone: jpg/jpeg/png/webp</div>
+            </div>
+
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-outline-secondary ms-2">Back to List</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        (function () {
+            const dropZone = document.getElementById('dropZone');
+            const input = document.getElementById('coverInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const preview = document.getElementById('preview');
+
+            function showFile(file) {
+                fileInfo.textContent = file ? `Wybrano: ${file.name}` : '';
+                if (!file) {
+                    preview.src = '';
+                    preview.classList.add('d-none');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // klik -> wybór pliku
+            dropZone.addEventListener('click', () => input.click());
+
+            // wybór z okna plików
+            input.addEventListener('change', () => {
+                const file = input.files && input.files[0];
+                showFile(file);
+            });
+
+            // dragover styling
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('bg-light');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('bg-light');
+                });
+            });
+
+            // drop -> wrzuć plik do input
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (!files || files.length === 0) return;
+
+                // przypisanie do input
+                input.files = files;
+
+                showFile(files[0]);
+            });
+        })();
+    </script>
 }

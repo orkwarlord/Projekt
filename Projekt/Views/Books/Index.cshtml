@@ -1,8 +1,11 @@
 ﻿@model IEnumerable<Projekt.Models.Book>
 @using Microsoft.AspNetCore.Mvc.Rendering
+
 @{
     ViewData["Title"] = "Książki";
 }
+
+<h1>Książki</h1>
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-md-4">
@@ -26,10 +29,20 @@
     <div class="col-md-4 d-flex align-items-end gap-2">
         <button type="submit" class="btn btn-primary">Filtruj</button>
         <a asp-action="Index" class="btn btn-outline-secondary">Wyczyść</a>
+
+        <!-- PRZYCISK KATEGORIE -->
+        <a class="btn btn-outline-dark"
+           asp-controller="Categories"
+           asp-action="Index">
+            Kategorie
+        </a>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create" class="btn btn-success ms-auto">Dodaj książkę</a>
+        }
     </div>
 </form>
-
-<h1>Książki</h1>
 
 @if (TempData["Success"] != null)
 {
@@ -40,56 +53,65 @@
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
 
-<p>
-    <a asp-action="Create">Dodaj nową książkę</a>
-</p>
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Brak książek do wyświetlenia.</div>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Tytuł</th>
+                <th>Autor</th>
+                <th>Opis</th>
+                <th>Kategoria</th>
+                <th>Wypożycz</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.Author</td>
+                    <td style="max-width: 400px;">@item.Description</td>
+                    <td>@(item.Category?.Name ?? "-")</td>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.First().Title)</th>
-            <th>@Html.DisplayNameFor(model => model.First().Author)</th>
-            <th>@Html.DisplayNameFor(model => model.First().Description)</th>
-            <th>Kategoria</th>
-            <th>Wypożycz</th>
-            <th>Akcje</th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var item in Model)
-    {
-        <tr>
-            <td>@item.Title</td>
-            <td>@item.Author</td>
-            <td>@item.Description</td>
-            <td>@(item.Category?.Name ?? "-")</td>
+                    <td>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-controller="Rentings" asp-action="Borrow" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="bookId" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    Wypożycz
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-area="Identity" asp-page="/Account/Login">
+                                Zaloguj się
+                            </a>
+                        }
+                    </td>
 
-            <td>
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <form asp-controller="Rentings" asp-action="Borrow" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="bookId" value="@item.Id" />
-                        <button type="submit" class="btn btn-sm btn-primary">
-                            Wypożycz
-                        </button>
-                    </form>
-                }
-                else
-                {
-                    <a class="btn btn-sm btn-outline-secondary"
-                       asp-area="Identity" asp-page="/Account/Login">
-                        Zaloguj się
-                    </a>
-                }
-            </td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id">Details</a>
 
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <span> | </span>
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                            <span> | </span>
+                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

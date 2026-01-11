@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
-using Projekt.DTO;
 using Projekt.Models;
 
 namespace Projekt.Controllers
@@ -42,7 +41,7 @@ namespace Projekt.Controllers
                 .Include(r => r.Book)
                     .ThenInclude(b => b.Category)
                 .OrderByDescending(r => r.RentedAt)
-                .Select(r => new RentingDTO(r)).ToListAsync();
+                .ToListAsync();
 
             return View(rentings);
         }
@@ -102,7 +101,7 @@ namespace Projekt.Controllers
                 return RedirectToAction(nameof(My));
             }
 
-            // bez ról: user może oddać tylko swoje wypożyczenie
+            // user może oddać tylko swoje wypożyczenie
             if (renting.AppUserId != userId)
                 return Forbid();
 
@@ -113,7 +112,7 @@ namespace Projekt.Controllers
             return RedirectToAction(nameof(My));
         }
 
-        // details dla zalogowanego usera
+        // details dla zalogowanego uzytkownika
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -122,7 +121,8 @@ namespace Projekt.Controllers
             if (userId == null) return Challenge();
 
             var renting = await _context.Rentings
-                .Include(r => r.Book).ThenInclude(b => b.Category)
+                .Include(r => r.Book)
+                    .ThenInclude(b => b.Category)
                 .FirstOrDefaultAsync(r => r.Id == id && r.AppUserId == userId);
 
             if (renting == null) return NotFound();

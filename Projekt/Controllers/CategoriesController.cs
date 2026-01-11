@@ -5,9 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.DTO;
 using Projekt.Models;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace Projekt.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class CategoriesController : Controller
     {
         private readonly ApplicationDbContext _context;

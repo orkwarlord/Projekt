@@ -6,37 +6,63 @@
 
 <h1>Details</h1>
 
-<div>
-    <h4>Book</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Author)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Author)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Category)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Category.Id)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        @if (!string.IsNullOrEmpty(Model.CoverImagePath))
+        {
+            <img src="~/@Model.CoverImagePath"
+                 alt="Okładka"
+                 class="img-thumbnail mb-3"
+                 style="max-width: 100%; height: auto;" />
+        }
+        else
+        {
+            <div class="alert alert-secondary">Brak okładki</div>
+        }
+    </div>
+
+    <div class="col-md-8">
+        <h4>Book</h4>
+        <hr />
+
+        <dl class="row">
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Title)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Title)
+            </dd>
+
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Author)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Author)
+            </dd>
+
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Description)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Description)
+            </dd>
+
+            <dt class="col-sm-3">
+                Kategoria
+            </dt>
+            <dd class="col-sm-9">
+                @(Model.Category?.Name ?? "-")
+            </dd>
+        </dl>
+
+        <div>
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+            }
+            <a class="btn btn-outline-secondary" asp-action="Index">Back to List</a>
+        </div>
+    </div>
 </div>
