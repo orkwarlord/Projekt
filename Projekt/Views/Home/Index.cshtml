@@ -3,17 +3,17 @@
 }
 
 <div class="text-center mt-5">
-    <h1 class="display-4">Witaj w wirtualnej bibliotece📚</h1>
+    <h1 class="display-4">Welcome to the Virtual Library📚</h1>
 
     <p class="lead mt-3">
-        Przeglądaj książki, wypożyczaj je i zarządzaj swoimi wypożyczeniami.
+        Browse, borrow and manage your books.
     </p>
 
     <div class="mt-4 d-flex justify-content-center gap-3">
         <a asp-controller="Books"
            asp-action="Index"
            class="btn btn-primary btn-lg">
-            📖 Przejdź do biblioteki
+            📖 Go To The Library
         </a>
 
         @if (User.Identity?.IsAuthenticated == true)
@@ -21,7 +21,7 @@
             <a asp-controller="Rentings"
                asp-action="My"
                class="btn btn-success btn-lg">
-                👤 Mój profil
+                👤 My Profile
             </a>
         }
         else
@@ -29,7 +29,7 @@
             <a asp-area="Identity"
                asp-page="/Account/Login"
                class="btn btn-outline-secondary btn-lg">
-                🔐 Zaloguj się
+                🔐 Log In
             </a>
         }
     </div>
@@ -40,9 +40,9 @@
     <div class="col-md-4">
         <div class="card shadow-sm border-0 rounded-4 h-100">
             <div class="card-body">
-                <div class="text-muted fw-semibold">📚 Książki</div>
+                <div class="text-muted fw-semibold">📚 Books</div>
                 <div class="display-6 fw-bold">@ViewBag.BooksCount</div>
-                <div class="text-muted">w bazie</div>
+                <div class="text-muted">available</div>
             </div>
         </div>
     </div>
@@ -50,9 +50,9 @@
     <div class="col-md-4">
         <div class="card shadow-sm border-0 rounded-4 h-100">
             <div class="card-body">
-                <div class="text-muted fw-semibold">🏷️ Kategorie</div>
+                <div class="text-muted fw-semibold">🏷️ Categories</div>
                 <div class="display-6 fw-bold">@ViewBag.CategoriesCount</div>
-                <div class="text-muted">dostępnych</div>
+               
             </div>
         </div>
     </div>
@@ -60,9 +60,9 @@
     <div class="col-md-4">
         <div class="card shadow-sm border-0 rounded-4 h-100">
             <div class="card-body">
-                <div class="text-muted fw-semibold">📖 Aktywne wypożyczenia</div>
+                <div class="text-muted fw-semibold">📖 Books</div>
                 <div class="display-6 fw-bold">@ViewBag.ActiveRentingsCount</div>
-                <div class="text-muted">do zwrotu</div>
+                <div class="text-muted">pending return</div>
             </div>
         </div>
     </div>

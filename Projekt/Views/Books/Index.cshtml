@@ -2,44 +2,44 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    ViewData["Title"] = "Książki";
+    ViewData["Title"] = "Books";
 }
 
-<h1>Książki</h1>
+<h1>Books</h1>
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-md-4">
-        <label class="form-label">Autor</label>
+        <label class="form-label">Author</label>
         <input type="text"
                name="author"
                value="@(ViewData["Author"] as string)"
                class="form-control"
-               placeholder="np. Sienkiewicz" />
+               placeholder="example: Sapkowski, Lewis " />
     </div>
 
     <div class="col-md-4">
-        <label class="form-label">Kategoria</label>
+        <label class="form-label">Category</label>
         <select name="categoryId"
                 class="form-select"
                 asp-items="@(ViewData["Categories"] as SelectList)">
-            <option value="">-- wszystkie --</option>
+            <option value="">-- blank --</option>
         </select>
     </div>
 
     <div class="col-md-4 d-flex align-items-end gap-2">
-        <button type="submit" class="btn btn-primary">Filtruj</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Wyczyść</a>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
 
         <!-- PRZYCISK KATEGORIE -->
         <a class="btn btn-outline-dark"
            asp-controller="Categories"
            asp-action="Index">
-            Kategorie
+            Categories
         </a>
 
         @if (User.IsInRole("Admin"))
         {
-            <a asp-action="Create" class="btn btn-success ms-auto">Dodaj książkę</a>
+            <a asp-action="Create" class="btn btn-success ms-auto">Add Book</a>
         }
     </div>
 </form>
@@ -55,19 +55,19 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">Brak książek do wyświetlenia.</div>
+    <div class="alert alert-info">No Books To Display.</div>
 }
 else
 {
     <table class="table table-striped align-middle">
         <thead>
             <tr>
-                <th>Tytuł</th>
-                <th>Autor</th>
-                <th>Opis</th>
-                <th>Kategoria</th>
-                <th>Wypożycz</th>
-                <th>Akcje</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Borrow</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -86,7 +86,7 @@ else
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="bookId" value="@item.Id" />
                                 <button type="submit" class="btn btn-sm btn-primary">
-                                    Wypożycz
+                                    Borrow
                                 </button>
                             </form>
                         }
@@ -94,7 +94,7 @@ else
                         {
                             <a class="btn btn-sm btn-outline-secondary"
                                asp-area="Identity" asp-page="/Account/Login">
-                                Zaloguj się
+                               Log In
                             </a>
                         }
                     </td>

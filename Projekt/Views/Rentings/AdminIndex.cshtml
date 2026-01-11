@@ -1,10 +1,10 @@
 ﻿@model IEnumerable<Projekt.Models.Renting>
 
 @{
-    ViewData["Title"] = "Wypożyczenia (Admin)";
+    ViewData["Title"] = "Borrowed Books (Admin)";
 }
 
-<h1>Wypożyczenia (Admin)</h1>
+<h1>Borrowed Books (Admin)</h1>
 
 @if (TempData["Success"] != null)
 {
@@ -19,11 +19,11 @@
     <thead>
         <tr>
             <th>ID</th>
-            <th>Książka</th>
-            <th>Użytkownik</th>
-            <th>Wypożyczono</th>
-            <th>Oddano</th>
-            <th>Akcje</th>
+            <th>Book</th>
+            <th>User</th>
+            <th>Borrowed At</th>
+            <th>Returned</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -43,7 +43,7 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@r.Id" />
                             <button type="submit" class="btn btn-sm btn-outline-success">
-                                Zakończ
+                                End
                             </button>
                         </form>
                     }
@@ -53,7 +53,7 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@r.Id" />
                         <button type="submit" class="btn btn-sm btn-outline-danger">
-                            Usuń
+                            Delete
                         </button>
                     </form>
                 </td>

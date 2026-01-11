@@ -1,10 +1,10 @@
 ﻿@model List<Projekt.Models.Renting>
 
 @{
-    ViewData["Title"] = "Mój profil - wypożyczenia";
+    ViewData["Title"] = "My Profile -  Borrowed Books";
 }
 
-<h2>Mój profil</h2>
+<h2>My Profile</h2>
 <p class="text-muted">Historia wypożyczeń</p>
 
 @if (TempData["Success"] != null)
@@ -18,16 +18,16 @@
 
 @if (Model == null || !Model.Any())
 {
-    <div class="alert alert-info">Nie masz jeszcze żadnych wypożyczeń.</div>
+    <div class="alert alert-info">You haven't borrowed any books. We hope you change that soon!</div>
 }
 else
 {
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Książka</th>
-                <th>Kategoria</th>
-                <th>Wypożyczono</th>
+                <th>Book</th>
+                <th>Category</th>
+                <th>Borrowed</th>
                 <th>Status</th>
                 <th></th>
             </tr>
@@ -50,7 +50,7 @@ else
                         }
                         else
                         {
-                            <span class="badge bg-success">Oddane</span>
+                            <span class="badge bg-success">Returned</span>
                             <span class="text-muted">
                                 (@r.ReturnedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"))
                             </span>
