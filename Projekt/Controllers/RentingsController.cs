@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
+using Projekt.DTO;
 using Projekt.Models;
 
 namespace Projekt.Controllers
@@ -41,7 +42,7 @@ namespace Projekt.Controllers
                 .Include(r => r.Book)
                     .ThenInclude(b => b.Category)
                 .OrderByDescending(r => r.RentedAt)
-                .ToListAsync();
+                .Select(r => new RentingDTO(r)).ToListAsync();
 
             return View(rentings);
         }

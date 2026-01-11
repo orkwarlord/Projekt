@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
+using Projekt.DTO;
 using Projekt.Models;
 
 namespace Projekt.Controllers
@@ -21,7 +22,7 @@ namespace Projekt.Controllers
         {
             var categories = await _context.Categories
                 .Include(c => c.Books)
-                .ToListAsync();
+                .Select(c => new CategoryDTO(c)).ToListAsync();
 
             return View(categories);
         }
@@ -37,7 +38,7 @@ namespace Projekt.Controllers
 
             if (category == null) return NotFound();
 
-            return View(category);
+            return View(new CategoryDTO(category));
         }
 
         // GET: Categories/Create

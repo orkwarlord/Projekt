@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
+using Projekt.DTO;
 using Projekt.Models;
 
 namespace Projekt.Controllers
@@ -23,7 +24,7 @@ namespace Projekt.Controllers
         {
             var q = _context.Books
                 .Include(b => b.Category)
-                .AsQueryable();
+                .Select(b => new BookDTO(b)).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(author))
                 q = q.Where(b => b.Author.Contains(author));
@@ -48,7 +49,7 @@ namespace Projekt.Controllers
 
             if (book == null) return NotFound();
 
-            return View(book);
+            return View(new BookDTO(book));
         }
 
         // GET: Books/Create
@@ -61,8 +62,18 @@ namespace Projekt.Controllers
         // POST: Books/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Title,Author,Description,CategoryId")] Book book)
+        public async Task<IActionResult> Create([Bind("Id,Title,Author,Description,CategoryId")] BookDTO bookDTO)
         {
+            Book book = new Book()
+            {
+                Id = bookDTO.Id,
+                Author = bookDTO.Author,
+                Title = bookDTO.Title,
+                Description = bookDTO.Description,
+                CategoryId = bookDTO.CategoryId,
+
+
+            };
             if (ModelState.IsValid)
             {
                 _context.Add(book);
@@ -89,10 +100,18 @@ namespace Projekt.Controllers
         // POST: Books/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] Book book)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] BookDTO bookDTO)
         {
-            if (id != book.Id) return NotFound();
+            if (id != bookDTO.Id) return NotFound();
+            Book book = new Book()
+            {
+                Id = bookDTO.Id,
+                Title = bookDTO.Title,
+                Author = bookDTO.Author,
+                Description = bookDTO.Description,
+                CategoryId = bookDTO.CategoryId,
 
+            };
             if (ModelState.IsValid)
             {
                 try
