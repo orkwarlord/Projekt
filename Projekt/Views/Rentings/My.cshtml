@@ -5,7 +5,7 @@
 }
 
 <h2>My Profile</h2>
-<p class="text-muted">Historia wypożyczeń</p>
+<p class="text-muted">List of Borrowed Books</p>
 
 @if (TempData["Success"] != null)
 {
@@ -46,7 +46,7 @@ else
                     <td>
                         @if (active)
                         {
-                            <span class="badge bg-warning text-dark">Aktywne</span>
+                            <span class="badge bg-warning text-dark">Active</span>
                         }
                         else
                         {
@@ -62,7 +62,7 @@ else
                             <form asp-controller="Rentings" asp-action="Return" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="rentingId" value="@r.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Oddaj</button>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Return</button>
                             </form>
                         }
                     </td>
