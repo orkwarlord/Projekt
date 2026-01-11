@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
-
+using Projekt.DTO;
 namespace Projekt.Controllers
 {
     public class BooksController : Controller
@@ -94,7 +94,7 @@ namespace Projekt.Controllers
         // POST: Books/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] Book book)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] BookDTO bookDTO)
         {
             if (id != book.Id) return NotFound();
 

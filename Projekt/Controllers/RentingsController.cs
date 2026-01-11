@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
+using Projekt.DTO;
 
 namespace Projekt.Controllers
 {
@@ -22,16 +24,14 @@ namespace Projekt.Controllers
             _userManager = userManager;
         }
 
-        // ✅ Domyślna strona wypożyczeń = profil użytkownika (historia)
+        //domyslna strona wypozyczen = profil uzytkownika (historia wypozyczen)
         // GET: /Rentings
         public IActionResult Index()
         {
             return RedirectToAction(nameof(My));
         }
 
-        // =========================
         // USER: moje wypożyczenia (profil)
-        // =========================
         // GET: Rentings/My
         public async Task<IActionResult> My()
         {
@@ -46,11 +46,8 @@ namespace Projekt.Controllers
                 .ToListAsync();
 
             return View(rentings);
-        }
 
-        // =========================
         // USER: wypożycz książkę
-        // =========================
         // POST: Rentings/Borrow
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -85,9 +82,7 @@ namespace Projekt.Controllers
             return RedirectToAction("Index", "Books");
         }
 
-        // =========================
         // USER: oddaj książkę
-        // =========================
         // POST: Rentings/Return
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -106,8 +101,15 @@ namespace Projekt.Controllers
                 TempData["Error"] = "To wypożyczenie jest już zakończone (książka była oddana).";
                 return RedirectToAction(nameof(My));
             }
+            Renting renting = new Renting()
+            {
+                Id = rentingDTO.Id,
+                BookId = rentingDTO.BookId,
+                AppUserId = GetUserId(),
+                RentedAt = rentingDTO.RentedAt,
+                ReturnedAt = rentingDTO.ReturnedAt
 
-            // ✅ Bez ról: user może oddać TYLKO swoje wypożyczenie
+            //bez ról: user moze oddac tylko swoje wypozyczenie
             if (renting.AppUserId != userId)
                 return Forbid();
 
@@ -118,8 +120,7 @@ namespace Projekt.Controllers
             return RedirectToAction(nameof(My));
         }
 
-        // (opcjonalnie) Details tylko dla zalogowanego usera, ale wyłącznie jego rekord
-        // Jeśli nie potrzebujesz Details, możesz to wywalić.
+        //details dla zalogowanego usera
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();

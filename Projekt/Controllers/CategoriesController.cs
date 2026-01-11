@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
-
+using Projekt.DTO;
 namespace Projekt.Controllers
 {
     public class CategoriesController : Controller
@@ -21,7 +21,7 @@ namespace Projekt.Controllers
         // GET: Categories
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Categories.ToListAsync());
+            return View(await _context.Categories.Include(c => c.Books).Select(c => new CategoryDTO(c)).ToListAsync());
         }
 
         // GET: Categories/Details/5
@@ -48,7 +48,6 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name")] Category category)
         {
-            // 1) Create – nie binduj Id
             if (ModelState.IsValid)
             {
                 _context.Add(category);
@@ -111,7 +110,7 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            // 2) Delete – blokuj jeśli są książki w tej kategorii
+            // blokuj usuwanie jezeli sa ksiazki w tej kategorii
             var hasBooks = await _context.Books.AnyAsync(b => b.CategoryId == id);
             if (hasBooks)
             {
