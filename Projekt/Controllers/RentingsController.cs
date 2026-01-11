@@ -1,18 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
+using Projekt.DTO;
 
 namespace Projekt.Controllers
 {
     public class RentingsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private string GetUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        }
 
         public RentingsController(ApplicationDbContext context)
         {
@@ -22,7 +28,7 @@ namespace Projekt.Controllers
         // GET: Rentings
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Rentings.Include(r => r.AppUser).Include(r => r.Book);
+            var applicationDbContext = _context.Rentings.Include(r => r.AppUserId == GetUserId()).Include(r => r.Book);
             return View(await applicationDbContext.ToListAsync());
         }
 
@@ -35,7 +41,7 @@ namespace Projekt.Controllers
             }
 
             var renting = await _context.Rentings
-                .Include(r => r.AppUser)
+                .Include(r => r.AppUserId == GetUserId())
                 .Include(r => r.Book)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (renting == null)
@@ -49,8 +55,8 @@ namespace Projekt.Controllers
         // GET: Rentings/Create
         public IActionResult Create()
         {
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id");
-            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Id");
+            
+            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Title");
             return View();
         }
 
@@ -59,16 +65,25 @@ namespace Projekt.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,BookId,AppUserId,RentedAt,ReturnedAt")] Renting renting)
+        public async Task<IActionResult> Create([Bind("Id,BookId,AppUserId,RentedAt,ReturnedAt")] RentingDTO rentingDTO)
         {
+            Renting renting = new Renting()
+            {
+                Id = rentingDTO.Id,
+                BookId = rentingDTO.BookId,
+                AppUserId = GetUserId(),
+                RentedAt = rentingDTO.RentedAt,
+                ReturnedAt = rentingDTO.ReturnedAt
+
+            };
             if (ModelState.IsValid)
             {
                 _context.Add(renting);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", renting.AppUserId);
-            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Id", renting.BookId);
+           
+            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Title", renting.BookId);
             return View(renting);
         }
 
@@ -80,7 +95,7 @@ namespace Projekt.Controllers
                 return NotFound();
             }
 
-            var renting = await _context.Rentings.FindAsync(id);
+            var renting = await _context.Rentings.Where(r => r.AppUserId == GetUserId()).FirstOrDefaultAsync(m=> m.Id == id);
             if (renting == null)
             {
                 return NotFound();
@@ -95,13 +110,21 @@ namespace Projekt.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,BookId,AppUserId,RentedAt,ReturnedAt")] Renting renting)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,BookId,AppUserId,RentedAt,ReturnedAt")] RentingDTO rentingDTO)
         {
-            if (id != renting.Id)
+            if (id != rentingDTO.Id)
             {
                 return NotFound();
             }
+            Renting renting = new Renting()
+            {
+                Id = rentingDTO.Id,
+                BookId = rentingDTO.BookId,
+                AppUserId = GetUserId(),
+                RentedAt = rentingDTO.RentedAt,
+                ReturnedAt = rentingDTO.ReturnedAt
 
+            };
             if (ModelState.IsValid)
             {
                 try
@@ -122,8 +145,8 @@ namespace Projekt.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", renting.AppUserId);
-            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Id", renting.BookId);
+          
+            ViewData["BookId"] = new SelectList(_context.Books, "Id", "Title", renting.BookId);
             return View(renting);
         }
 

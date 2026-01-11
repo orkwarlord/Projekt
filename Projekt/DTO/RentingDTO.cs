@@ -11,5 +11,12 @@ namespace Projekt.DTO
 
         public DateTime RentedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ReturnedAt { get; set; }
+        public RentingDTO() { }
+        public RentingDTO(Renting renting)
+        {
+            Id = renting.Id;
+            RentedAt = renting.RentedAt;
+            ReturnedAt = renting.ReturnedAt;
+        }
     }
 }

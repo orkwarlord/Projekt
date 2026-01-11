@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
-
+using Projekt.DTO;
 namespace Projekt.Controllers
 {
     public class BooksController : Controller
@@ -22,7 +22,7 @@ namespace Projekt.Controllers
         // GET: Books
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Books.Include(b => b.Category);
+            var applicationDbContext = _context.Books.Include(b => b.Category).Select(b => new BookDTO(b));
             return View(await applicationDbContext.ToListAsync());
         }
 
@@ -42,13 +42,13 @@ namespace Projekt.Controllers
                 return NotFound();
             }
 
-            return View(book);
+            return View(new BookDTO(book));
         }
 
         // GET: Books/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id");
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
             return View();
         }
 
@@ -57,15 +57,23 @@ namespace Projekt.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Author,Description,CategoryId")] Book book)
+        public async Task<IActionResult> Create([Bind("Id,Title,Author,Description,CategoryId")] BookDTO bookDTO)
         {
+            Book book = new Book()
+            {
+                Id = bookDTO.Id,
+                Title = bookDTO.Title,
+                Author = bookDTO.Author,
+                Description = bookDTO.Description,
+                CategoryId = bookDTO.CategoryId,
+            };
             if (ModelState.IsValid)
             {
                 _context.Add(book);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id", book.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
 
@@ -82,7 +90,7 @@ namespace Projekt.Controllers
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id", book.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
 
@@ -91,13 +99,20 @@ namespace Projekt.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] Book book)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] BookDTO bookDTO)
         {
-            if (id != book.Id)
+            if (id != bookDTO.Id)
             {
                 return NotFound();
             }
-
+            Book book = new Book()
+            {
+                Id = bookDTO.Id,
+                Title = bookDTO.Title,
+                Author = bookDTO.Author,
+                Description = bookDTO.Description,
+                CategoryId = bookDTO.CategoryId,
+            };
             if (ModelState.IsValid)
             {
                 try
@@ -118,7 +133,7 @@ namespace Projekt.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id", book.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
 

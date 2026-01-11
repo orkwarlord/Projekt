@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
-
+using Projekt.DTO;
 namespace Projekt.Controllers
 {
     public class CategoriesController : Controller
@@ -22,7 +22,7 @@ namespace Projekt.Controllers
         // GET: Categories
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Categories.ToListAsync());
+            return View(await _context.Categories.Include(c => c.Books).Select(c => new CategoryDTO(c)).ToListAsync());
         }
 
         // GET: Categories/Details/5
@@ -34,13 +34,13 @@ namespace Projekt.Controllers
             }
 
             var category = await _context.Categories
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .Include(c => c.Books).FirstOrDefaultAsync(m => m.Id == id);
             if (category == null)
             {
                 return NotFound();
             }
 
-            return View(category);
+            return View(new CategoryDTO(category));
         }
 
         // GET: Categories/Create
