@@ -1,8 +1,33 @@
 ﻿@model IEnumerable<Projekt.Models.Book>
-
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = "Książki";
 }
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <label class="form-label">Autor</label>
+        <input type="text"
+               name="author"
+               value="@(ViewData["Author"] as string)"
+               class="form-control"
+               placeholder="np. Sienkiewicz" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Kategoria</label>
+        <select name="categoryId"
+                class="form-select"
+                asp-items="@(ViewData["Categories"] as SelectList)">
+            <option value="">-- wszystkie --</option>
+        </select>
+    </div>
+
+    <div class="col-md-4 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Filtruj</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Wyczyść</a>
+    </div>
+</form>
 
 <h1>Książki</h1>
 
