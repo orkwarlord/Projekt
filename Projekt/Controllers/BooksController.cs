@@ -24,7 +24,7 @@ namespace Projekt.Controllers
         {
             var q = _context.Books
                 .Include(b => b.Category)
-                .Select(b => new BookDTO(b)).AsQueryable();
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(author))
                 q = q.Where(b => b.Author.Contains(author));
