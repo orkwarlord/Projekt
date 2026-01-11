@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
-using Projekt.DTO;
 
 namespace Projekt.Controllers
 {
@@ -24,7 +22,7 @@ namespace Projekt.Controllers
             _userManager = userManager;
         }
 
-        //domyslna strona wypozyczen = profil uzytkownika (historia wypozyczen)
+        // domyślna strona wypożyczeń = profil użytkownika (historia wypożyczeń)
         // GET: /Rentings
         public IActionResult Index()
         {
@@ -46,6 +44,7 @@ namespace Projekt.Controllers
                 .ToListAsync();
 
             return View(rentings);
+        }
 
         // USER: wypożycz książkę
         // POST: Rentings/Borrow
@@ -101,15 +100,8 @@ namespace Projekt.Controllers
                 TempData["Error"] = "To wypożyczenie jest już zakończone (książka była oddana).";
                 return RedirectToAction(nameof(My));
             }
-            Renting renting = new Renting()
-            {
-                Id = rentingDTO.Id,
-                BookId = rentingDTO.BookId,
-                AppUserId = GetUserId(),
-                RentedAt = rentingDTO.RentedAt,
-                ReturnedAt = rentingDTO.ReturnedAt
 
-            //bez ról: user moze oddac tylko swoje wypozyczenie
+            // bez ról: user może oddać tylko swoje wypożyczenie
             if (renting.AppUserId != userId)
                 return Forbid();
 
@@ -120,7 +112,7 @@ namespace Projekt.Controllers
             return RedirectToAction(nameof(My));
         }
 
-        //details dla zalogowanego usera
+        // details dla zalogowanego usera
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
-using Projekt.DTO;
+
 namespace Projekt.Controllers
 {
     public class BooksController : Controller
@@ -19,7 +18,7 @@ namespace Projekt.Controllers
             _context = context;
         }
 
-        // GET: Books (BONUS: filtrowanie)
+        // GET: Books + filtrowanie
         public async Task<IActionResult> Index(string? author, int? categoryId)
         {
             var q = _context.Books
@@ -55,7 +54,6 @@ namespace Projekt.Controllers
         // GET: Books/Create
         public IActionResult Create()
         {
-            // 1) Dropdown: Name zamiast Id
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
             return View();
         }
@@ -65,7 +63,6 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Title,Author,Description,CategoryId")] Book book)
         {
-            // 2) Overposting: nie bindujemy Id w Create
             if (ModelState.IsValid)
             {
                 _context.Add(book);
@@ -73,7 +70,6 @@ namespace Projekt.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Dropdown: Name + zachowanie wybranej kategorii
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
@@ -86,7 +82,6 @@ namespace Projekt.Controllers
             var book = await _context.Books.FindAsync(id);
             if (book == null) return NotFound();
 
-            // 1) Dropdown: Name zamiast Id
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
@@ -94,7 +89,7 @@ namespace Projekt.Controllers
         // POST: Books/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] BookDTO bookDTO)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Description,CategoryId")] Book book)
         {
             if (id != book.Id) return NotFound();
 
@@ -110,10 +105,10 @@ namespace Projekt.Controllers
                     if (!BookExists(book.Id)) return NotFound();
                     throw;
                 }
+
                 return RedirectToAction(nameof(Index));
             }
 
-            // Dropdown: Name + zachowanie wybranej kategorii
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", book.CategoryId);
             return View(book);
         }
@@ -137,11 +132,14 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            // 3) Blokada usuwania jeśli są wypożyczenia
-            var hasRentings = await _context.Rentings.AnyAsync(r => r.BookId == id);
-            if (hasRentings)
+            // blokuj usuwanie TYLKO jeśli jest aktywne wypożyczenie
+            var hasActiveRenting = await _context.Rentings
+                .AnyAsync(r => r.BookId == id && r.ReturnedAt == null);
+
+            if (hasActiveRenting)
             {
-                ModelState.AddModelError("", "Nie można usunąć książki, bo ma historię wypożyczeń.");
+                ModelState.AddModelError("", "Nie można usunąć książki, bo jest aktualnie wypożyczona.");
+
                 var bookWithCat = await _context.Books
                     .Include(b => b.Category)
                     .FirstOrDefaultAsync(b => b.Id == id);

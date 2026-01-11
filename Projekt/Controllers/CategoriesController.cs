@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Projekt.Data;
 using Projekt.Models;
-using Projekt.DTO;
+
 namespace Projekt.Controllers
 {
     public class CategoriesController : Controller
@@ -21,7 +19,11 @@ namespace Projekt.Controllers
         // GET: Categories
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Categories.Include(c => c.Books).Select(c => new CategoryDTO(c)).ToListAsync());
+            var categories = await _context.Categories
+                .Include(c => c.Books)
+                .ToListAsync();
+
+            return View(categories);
         }
 
         // GET: Categories/Details/5
@@ -30,6 +32,7 @@ namespace Projekt.Controllers
             if (id == null) return NotFound();
 
             var category = await _context.Categories
+                .Include(c => c.Books)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (category == null) return NotFound();
@@ -48,13 +51,11 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name")] Category category)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(category);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(category);
+            if (!ModelState.IsValid) return View(category);
+
+            _context.Add(category);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Categories/Edit/5
@@ -75,21 +76,20 @@ namespace Projekt.Controllers
         {
             if (id != category.Id) return NotFound();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(category);
+
+            try
             {
-                try
-                {
-                    _context.Update(category);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CategoryExists(category.Id)) return NotFound();
-                    throw;
-                }
-                return RedirectToAction(nameof(Index));
+                _context.Update(category);
+                await _context.SaveChangesAsync();
             }
-            return View(category);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CategoryExists(category.Id)) return NotFound();
+                throw;
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Categories/Delete/5
@@ -98,6 +98,7 @@ namespace Projekt.Controllers
             if (id == null) return NotFound();
 
             var category = await _context.Categories
+                .Include(c => c.Books)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (category == null) return NotFound();
@@ -110,12 +111,16 @@ namespace Projekt.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            // blokuj usuwanie jezeli sa ksiazki w tej kategorii
+            // blokuj usuwanie jeżeli są książki w tej kategorii
             var hasBooks = await _context.Books.AnyAsync(b => b.CategoryId == id);
             if (hasBooks)
             {
                 ModelState.AddModelError("", "Nie można usunąć kategorii, bo są do niej przypisane książki.");
-                var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+
+                var category = await _context.Categories
+                    .Include(c => c.Books)
+                    .FirstOrDefaultAsync(c => c.Id == id);
+
                 return View("Delete", category);
             }
 
