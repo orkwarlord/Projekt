@@ -21,8 +21,7 @@ namespace Projekt.Controllers
         public async Task<IActionResult> Index()
         {
             var categories = await _context.Categories
-                .Include(c => c.Books)
-                .Select(c => new CategoryDTO(c)).ToListAsync();
+                .Include(c => c.Books).ToListAsync();
 
             return View(categories);
         }
