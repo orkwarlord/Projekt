@@ -37,7 +37,7 @@
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Rentings" asp-action="AdminIndex">Borrowed Books</a>
+                                <a class="nav-link text-dark" asp-controller="Rentings" asp-action="AdminIndex">Admin Panel</a>
                             </li>
                         }
                     </ul>
@@ -59,7 +59,7 @@
 
                             <li class="nav-item">
                                 <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="d-inline">
-                                    <button type="submit" class="nav-link btn btn-link text-dark">Wyloguj</button>
+                                    <button type="submit" class="nav-link btn btn-link text-dark">Log out</button>
                                 </form>
                             </li>
                         }
