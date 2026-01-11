@@ -40,7 +40,7 @@ namespace Projekt.Controllers
 
             if (category == null) return NotFound();
 
-            return View(new CategoryDTO(category));
+            return View();
         }
 
         // GET: Categories/Create
