@@ -129,5 +129,64 @@ namespace Projekt.Controllers
 
             return View(renting);
         }
+
+        // interfejs admina
+        // ADMIN: wszystkie wypożyczenia
+        // GET: Rentings/AdminIndex
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminIndex()
+        {
+            var rentings = await _context.Rentings
+                .Include(r => r.Book)
+                    .ThenInclude(b => b.Category)
+                .Include(r => r.AppUser)
+                .OrderByDescending(r => r.RentedAt)
+                .ToListAsync();
+
+            return View(rentings);
+        }
+
+        // ADMIN: usuń wypożyczenie z czyjegoś konta (usuwa rekord)
+        // POST: Rentings/AdminDelete
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdminDelete(int id)
+        {
+            var renting = await _context.Rentings.FindAsync(id);
+            if (renting != null)
+            {
+                _context.Rentings.Remove(renting);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Usunięto wypożyczenie.";
+            }
+
+            return RedirectToAction(nameof(AdminIndex));
+        }
+
+        // ADMIN: zakończ wypożyczenie (ustawia ReturnedAt)
+        // POST: Rentings/AdminReturn
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdminReturn(int id)
+        {
+            var renting = await _context.Rentings.FirstOrDefaultAsync(r => r.Id == id);
+            if (renting == null) return NotFound();
+
+            if (renting.ReturnedAt == null)
+            {
+                renting.ReturnedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Zakończono wypożyczenie (oddano książkę).";
+            }
+            else
+            {
+                TempData["Error"] = "To wypożyczenie było już zakończone.";
+            }
+
+            return RedirectToAction(nameof(AdminIndex));
+        }
+
     }
 }

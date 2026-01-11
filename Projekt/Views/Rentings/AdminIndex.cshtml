@@ -1,0 +1,63 @@
+﻿@model IEnumerable<Projekt.Models.Renting>
+
+@{
+    ViewData["Title"] = "Wypożyczenia (Admin)";
+}
+
+<h1>Wypożyczenia (Admin)</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Książka</th>
+            <th>Użytkownik</th>
+            <th>Wypożyczono</th>
+            <th>Oddano</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.Id</td>
+                <td>@r.Book?.Title</td>
+                <td>@(r.AppUser?.Email ?? r.AppUserId)</td>
+                <td>@r.RentedAt</td>
+                <td>@(r.ReturnedAt?.ToString() ?? "-")</td>
+                <td class="d-flex gap-2">
+
+                    @if (r.ReturnedAt == null)
+                    {
+                        <form asp-action="AdminReturn" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                Zakończ
+                            </button>
+                        </form>
+                    }
+
+                    <form asp-action="AdminDelete" method="post" class="d-inline"
+                          onsubmit="return confirm('Na pewno usunąć to wypożyczenie?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@r.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            Usuń
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
