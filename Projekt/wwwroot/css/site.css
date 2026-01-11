@@ -162,3 +162,12 @@ h1 {
         .footer a:hover {
             text-decoration: underline;
         }
+
+.card.rounded-4 {
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+    .card.rounded-4:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 40px rgba(17, 24, 39, 0.10);
+    }
